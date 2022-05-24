@@ -1,0 +1,195 @@
+/*
+ Develop a project to implement knights’ travails where a knight can keep in any square in the first row of the chess board and move this knight to the last row with a minimum number of moves.Use the proper data structures to store the moves and search for the valid moves in an efficient manner.
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#define n 8
+int visited[n][n], board[n][n], endCol; // 8 x 8 is the dimension of chess board
+// endCol variable will store the colomn of last row on which knight reached
+
+// queue to store adjacent & next move's x & y co-ordinates
+struct queue
+{
+    int x, y, pos;
+    struct queue *next;
+} *front = NULL, *rear = NULL;
+
+void enQueue(int xval, int yval, int p)
+{
+    struct queue *node = (struct queue *)malloc(sizeof(struct queue));
+    node->x = xval;
+    node->y = yval;
+    node->pos = p;
+    node->next = NULL;
+    if (!front)
+    {
+        front = rear = node;
+    }
+    else
+    {
+        rear->next = node;
+        rear = rear->next;
+    }
+}
+
+struct queue *deQueue()
+{
+    struct queue *temp = front;
+    if (!front)
+        return NULL;
+    else
+    {
+        if (rear == front)
+            front = rear = NULL;
+        else
+            front = front->next;
+
+        temp->next = NULL;
+        return temp;
+    }
+}
+
+// to check if the given co-ordenates (x, y) is inside 8 x 8 chess board or not
+int isInside(int x, int y)
+{
+    if (x < n && x >= 0 && y < n && y >= 0)
+        return 1;
+    else
+        return 0;
+}
+
+// to find the next possible move of knight and enqueue it in given queue
+void adjacent(int x, int y, int m)
+{
+    int dx[] = {-2, -1, 1, 2, 2, 1, -1, -2},
+        dy[] = {1, 2, 2, 1, -1, -2, -2, -1}, a, b;
+    for (int i = 0; i < 8; i++)
+    {
+        a = x + dx[i];
+        b = y + dy[i];
+        if (isInside(a, b) && visited[a][b] == -1 && board[a][b] == -1)
+        {
+            enQueue(a, b, m + 1);
+            board[a][b] = m + 1;
+        }
+    }
+}
+
+// (0, y1) --> (7, y2) in min steps
+int steps(int begCol)
+{
+    struct queue *temp;
+    int x = 0, y = begCol; // x, y co-ordinate
+    visited[x][y] = 0;
+    board[x][y] = 0;
+    adjacent(x, y, 0);
+    while (front)
+    {
+        temp = deQueue();
+        x = temp->x;
+        y = temp->y;
+        visited[x][y] = 0;
+        if (x == n - 1)
+        {
+            endCol = y;
+            return temp->pos;
+        }
+        adjacent(x, y, temp->pos);
+        // free(temp);
+    }
+    return -1;
+}
+
+//to show the path taken by knight on board
+void display()
+{
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            if (visited[i][j] != -1)
+            {
+                printf("  %d", visited[i][j]);
+            }
+            else
+            {
+                printf(" %d", visited[i][j]);
+            }
+        }
+        printf("\n");
+    }
+}
+
+void displayB(){
+    printf("This is board\n");
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            printf("%d ",board[i][j]);
+             if (board[i][j] != -1)
+            {
+                printf("  %d", board[i][j]);
+            }
+            else
+            {
+                printf(" %d", board[i][j]);
+            }
+        }
+        printf("\n");
+    }
+}
+
+//to track back the path taken by knight
+void backtrack(int x, int y, int move)
+{
+    int dx[] = {-2, -1, 1, 2, 2, 1, -1, -2},
+        dy[] = {1, 2, 2, 1, -1, -2, -2, -1}, a, b;
+
+    if (x != 0)
+    {
+        printf("(%d, %d) <-", x, y);
+    }
+    else
+    {
+        printf("(%d, %d)", x, y);
+    }
+    visited[x][y] = move + 1;
+    for (int i = 0; i < 8; i++)
+    {
+        a = x - dx[i];
+        b = y - dy[i];
+        if (isInside(a, b) && board[a][b] == move - 1)
+        {
+            backtrack(a, b, move - 1);
+            break;
+        }
+    }
+}
+
+int main()
+{
+    int begCol, pos;
+    printf("Enter the column no.(0 - 7) where knight starts in first row:");
+    scanf("%d", &begCol);
+    if (begCol > n - 1 || begCol < 0)
+    {
+        printf("Input invalid!!");
+        return -1;
+    }
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            visited[i][j] = -1;
+            board[i][j] = -1;
+        }
+    }
+    pos = steps(begCol);
+    printf("Minimum no. of moves of knight to reach last row from first is %d and path is {", pos);
+    backtrack(n - 1, endCol, pos);
+    printf("}\n");
+    display();
+    displayB();
+    return 0;
+}
